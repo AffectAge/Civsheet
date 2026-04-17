@@ -18,6 +18,7 @@ const CONFIG = {
     POLITICAL_MAP: 'Политическая карта',
     ORDERS: 'Приказы',
     REPORTS: 'Отчёты',
+    SWITCHBOARD: 'Переключатели',
   },
 
   RANGES: {
@@ -115,6 +116,8 @@ function onOpen() {
     .addItem('Отрисовать отчёты', 'renderReports')
     .addItem('Отрисовать всё', 'renderAll')
     .addSeparator()
+    .addItem('Выполнить по переключателям', 'runActionsFromSwitchboard')
+    .addSeparator()
     .addItem('Очистить лист приказов', 'clearOrdersSheet')
     .addToUi();
 }
@@ -129,14 +132,91 @@ function bootstrapGameStorage() {
   const politicalMapSheet = getOrCreateSheet_(CONFIG.SHEETS.POLITICAL_MAP);
   const ordersSheet = getOrCreateSheet_(CONFIG.SHEETS.ORDERS);
   const reportsSheet = getOrCreateSheet_(CONFIG.SHEETS.REPORTS);
+  const switchboardSheet = getOrCreateSheet_(CONFIG.SHEETS.SWITCHBOARD);
 
   setupCoreSheet_(coreSheet);
   setupMapSheet_(mapSheet);
   setupPoliticalMapSheet_(politicalMapSheet);
   setupOrdersSheet_(ordersSheet);
   setupReportsSheet_(reportsSheet);
+  setupSwitchboardSheet_(switchboardSheet);
 
   ensureAllNamedRanges_();
+}
+
+function setupSwitchboardSheet_(sheet) {
+  const headers = ['action', 'run', 'description'];
+  const actions = getSwitchboardActions_();
+  const existing = sheet.getLastRow() >= 2 ? sheet.getRange(2, 1, sheet.getLastRow() - 1, 2).getValues() : [];
+  const existingRunByAction = {};
+  existing.forEach((row) => {
+    const id = String(row[0] || '').trim();
+    if (!id) return;
+    existingRunByAction[id] = row[1] === true;
+  });
+
+  const rows = actions.map((item) => [item.id, Boolean(existingRunByAction[item.id]), item.description]);
+  const targetRows = Math.max(rows.length + 1, 30);
+  ensureSheetSize_(sheet, targetRows, headers.length + 1);
+
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold');
+  sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
+
+  const checkboxRange = sheet.getRange(2, 2, rows.length, 1);
+  checkboxRange.insertCheckboxes();
+  checkboxRange.setValues(rows.map((row) => [row[1]]));
+
+  if (sheet.getLastRow() > rows.length + 1) {
+    sheet.getRange(rows.length + 2, 1, sheet.getLastRow() - rows.length - 1, headers.length).clearContent();
+  }
+  sheet.setFrozenRows(1);
+  sheet.setColumnWidth(1, 240);
+  sheet.setColumnWidth(2, 80);
+  sheet.setColumnWidth(3, 560);
+}
+
+function getSwitchboardActions_() {
+  return [
+    { id: 'bootstrapGameStorage', description: 'Подготовить хранилище и named ranges' },
+    { id: 'initNewGame', description: 'Создать новую игру (перезапишет текущее состояние)' },
+    { id: 'importOrdersFromSheet', description: 'Импортировать JSON-приказы с листа "Приказы"' },
+    { id: 'resolveTurnSafe', description: 'Выполнить ход' },
+    { id: 'renderMap', description: 'Отрисовать карту' },
+    { id: 'renderPoliticalMap', description: 'Отрисовать политическую карту' },
+    { id: 'renderReports', description: 'Отрисовать отчёты' },
+    { id: 'renderAll', description: 'Отрисовать всё' },
+    { id: 'clearOrdersSheet', description: 'Очистить лист приказов' },
+  ];
+}
+
+function runActionsFromSwitchboard() {
+  bootstrapGameStorage();
+  const sheet = getOrCreateSheet_(CONFIG.SHEETS.SWITCHBOARD);
+  const actions = getSwitchboardActions_();
+  const values = sheet.getRange(2, 1, actions.length, 2).getValues();
+  const messages = [];
+
+  values.forEach((row, i) => {
+    const actionId = String(row[0] || '').trim();
+    const shouldRun = row[1] === true;
+    if (!shouldRun) return;
+
+    const actionDef = actions.find((a) => a.id === actionId);
+    if (!actionDef) {
+      messages.push(`⚠ Неизвестное действие: ${actionId}`);
+      return;
+    }
+    const fn = this[actionDef.id];
+    if (typeof fn !== 'function') {
+      messages.push(`⚠ Функция не найдена: ${actionDef.id}`);
+      return;
+    }
+    fn();
+    messages.push(`✅ Выполнено: ${actionDef.id}`);
+    sheet.getRange(2 + i, 2).setValue(false);
+  });
+
+  SpreadsheetApp.getActive().toast(messages.length ? messages.join('\n') : 'Нет включённых переключателей');
 }
 
 function getOrCreateSheet_(name) {
