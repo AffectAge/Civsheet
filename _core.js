@@ -200,38 +200,23 @@ function runActionsFromSwitchboard() {
     const actionId = String(row[0] || '').trim();
     const shouldRun = row[1] === true;
     if (!shouldRun) return;
-    const result = runSwitchboardActionById_(actionId, sheet, 2 + i);
-    messages.push(result);
+
+    const actionDef = actions.find((a) => a.id === actionId);
+    if (!actionDef) {
+      messages.push(`⚠ Неизвестное действие: ${actionId}`);
+      return;
+    }
+    const fn = this[actionDef.id];
+    if (typeof fn !== 'function') {
+      messages.push(`⚠ Функция не найдена: ${actionDef.id}`);
+      return;
+    }
+    fn();
+    messages.push(`✅ Выполнено: ${actionDef.id}`);
+    sheet.getRange(2 + i, 2).setValue(false);
   });
 
   SpreadsheetApp.getActive().toast(messages.length ? messages.join('\n') : 'Нет включённых переключателей');
-}
-
-function onEdit(e) {
-  if (!e || !e.range) return;
-  const sheet = e.range.getSheet();
-  if (sheet.getName() !== CONFIG.SHEETS.SWITCHBOARD) return;
-  if (e.range.getColumn() !== 2 || e.range.getRow() < 2) return;
-  if (e.value !== 'TRUE') return;
-
-  const actionId = String(sheet.getRange(e.range.getRow(), 1).getValue() || '').trim();
-  const result = runSwitchboardActionById_(actionId, sheet, e.range.getRow());
-  SpreadsheetApp.getActive().toast(result);
-}
-
-function runSwitchboardActionById_(actionId, sheet, rowIndex) {
-  const actions = getSwitchboardActions_();
-  const actionDef = actions.find((a) => a.id === actionId);
-  if (!actionDef) return `⚠ Неизвестное действие: ${actionId}`;
-
-  const fn = this[actionDef.id];
-  if (typeof fn !== 'function') return `⚠ Функция не найдена: ${actionDef.id}`;
-
-  fn();
-  if (sheet && rowIndex) {
-    sheet.getRange(rowIndex, 2).setValue(false);
-  }
-  return `✅ Выполнено: ${actionDef.id}`;
 }
 
 function getOrCreateSheet_(name) {
