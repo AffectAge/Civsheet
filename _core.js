@@ -32,6 +32,12 @@ const CONFIG = {
     BUILDING_TYPES: 'NR_BUILDING_TYPES',
     TECH_TYPES: 'NR_TECH_TYPES',
     RULES: 'NR_RULES',
+    DISTRICTS: 'NR_DISTRICTS',
+    WONDERS: 'NR_WONDERS',
+    HEX_IMPROVEMENTS: 'NR_HEX_IMPROVEMENTS',
+    DISTRICT_TYPES: 'NR_DISTRICT_TYPES',
+    WONDER_TYPES: 'NR_WONDER_TYPES',
+    HEX_IMPROVEMENT_TYPES: 'NR_HEX_IMPROVEMENT_TYPES',
   },
 
   DEFAULT_CAPACITY: {
@@ -46,6 +52,12 @@ const CONFIG = {
     NR_BUILDING_TYPES: 500,
     NR_TECH_TYPES: 500,
     NR_RULES: 200,
+    NR_DISTRICTS: 2000,
+    NR_WONDERS: 200,
+    NR_HEX_IMPROVEMENTS: 5000,
+    NR_DISTRICT_TYPES: 100,
+    NR_WONDER_TYPES: 100,
+    NR_HEX_IMPROVEMENT_TYPES: 100,
   },
 
   CORE_LAYOUT: {
@@ -60,6 +72,12 @@ const CONFIG = {
     NR_BUILDING_TYPES: { col: 9 },
     NR_TECH_TYPES: { col: 10 },
     NR_RULES: { col: 11 },
+    NR_DISTRICTS: { col: 12 },
+    NR_WONDERS: { col: 13 },
+    NR_HEX_IMPROVEMENTS: { col: 14 },
+    NR_DISTRICT_TYPES: { col: 15 },
+    NR_WONDER_TYPES: { col: 16 },
+    NR_HEX_IMPROVEMENT_TYPES: { col: 17 },
   },
 
   CORE_START_ROW: 2,
@@ -235,6 +253,59 @@ function initNewGame() {
   SpreadsheetApp.getActive().toast('Новая игра создана');
 }
 
+function getInitialDistrictTypes_() {
+  return [
+    { id: 'campus', nameRu: 'Кампус', category: 'science', populationRequired: 3, cost: 90, yields: { science: 4 }, allowedBuildings: ['library', 'university'], maxPerCity: 1, icon: '🎓' },
+    { id: 'commercial_hub', nameRu: 'Торговый центр', category: 'gold', populationRequired: 2, cost: 80, yields: { gold: 4 }, allowedBuildings: ['market', 'bank'], maxPerCity: 1, icon: '💰' },
+    { id: 'harbor', nameRu: 'Гавань', category: 'gold', populationRequired: 2, cost: 75, yields: { gold: 2, food: 1 }, allowedBuildings: ['lighthouse', 'shipyard'], maxPerCity: 1, requiresCoast: true, icon: '⚓' },
+    { id: 'holy_site', nameRu: 'Священное место', category: 'faith', populationRequired: 1, cost: 70, yields: { faith: 4 }, allowedBuildings: ['shrine', 'temple'], maxPerCity: 1, icon: '⛪' },
+    { id: 'encampment', nameRu: 'Военный лагерь', category: 'military', populationRequired: 3, cost: 90, yields: { production: 1 }, allowedBuildings: ['barracks', 'stable'], maxPerCity: 1, icon: '🏕' },
+    { id: 'theater_square', nameRu: 'Театральная площадь', category: 'culture', populationRequired: 3, cost: 90, yields: { culture: 4 }, allowedBuildings: ['amphitheater', 'art_museum'], maxPerCity: 1, icon: '🎭' },
+    { id: 'industrial_zone', nameRu: 'Промышленная зона', category: 'production', populationRequired: 4, cost: 100, yields: { production: 4 }, allowedBuildings: ['workshop', 'factory'], maxPerCity: 1, icon: '🏭' },
+  ];
+}
+
+function getInitialWonderTypes_() {
+  return [
+    { id: 'pyramids', nameRu: 'Пирамиды', cost: 220, era: 'ancient', yields: { culture: 2, faith: 2 }, cityBonus: { housing: 2 }, unique: true, icon: '🔺', description: 'Все будущие поселенцы строятся с бонусом +1 ход.' },
+    { id: 'colosseum', nameRu: 'Колизей', cost: 400, era: 'classical', yields: { culture: 2, gold: 3 }, cityBonus: { amenities: 3 }, unique: true, icon: '🏟', description: '+3 удобства во всех городах в радиусе 6 тайлов.' },
+    { id: 'great_library', nameRu: 'Великая Библиотека', cost: 260, era: 'classical', yields: { science: 4, culture: 2 }, cityBonus: {}, unique: true, icon: '📚', description: '+2 великих учёных и +2 слота реликвий.' },
+    { id: 'stonehenge', nameRu: 'Стоунхендж', cost: 180, era: 'ancient', yields: { faith: 6 }, cityBonus: {}, unique: true, icon: '🗿', description: 'Бесплатная религия для построившего.' },
+    { id: 'colossus', nameRu: 'Колосс', cost: 400, era: 'classical', yields: { gold: 6 }, cityBonus: {}, unique: true, requiresCoast: true, icon: '🗽', description: 'Торговый маршрут в портовых городах приносит +1 золото.' },
+    { id: 'oracle', nameRu: 'Оракул', cost: 290, era: 'classical', yields: { culture: 2, faith: 2 }, cityBonus: {}, unique: true, icon: '🔮', description: 'Все технологии и гражданские науки исследуются на 20% быстрее.' },
+  ];
+}
+
+function getInitialHexImprovementTypes_() {
+  return [
+    { id: 'farm', nameRu: 'Ферма', icon: '🌾', cost: 0, yields: { food: 1 }, allowedTerrains: ['grassland', 'plains', 'desert', 'tundra'], requiredTech: null, removesFeature: false },
+    { id: 'mine', nameRu: 'Шахта', icon: '⛏', cost: 0, yields: { production: 2 }, allowedTerrains: ['hill', 'plains', 'desert', 'tundra'], requiredTech: 'mining', removesFeature: false },
+    { id: 'lumber_mill', nameRu: 'Лесопилка', icon: '🪚', cost: 0, yields: { production: 2 }, allowedTerrains: ['grassland', 'plains'], requiredFeature: 'forest', requiredTech: 'mining', removesFeature: false },
+    { id: 'pasture', nameRu: 'Пастбище', icon: '🐄', cost: 0, yields: { food: 1, production: 1 }, allowedTerrains: ['grassland', 'plains', 'tundra'], requiredTech: null, removesFeature: false },
+    { id: 'quarry', nameRu: 'Каменоломня', icon: '🪨', cost: 0, yields: { production: 1, gold: 1 }, allowedTerrains: ['grassland', 'plains', 'hill'], requiredTech: 'mining', removesFeature: false },
+    { id: 'road', nameRu: 'Дорога', icon: '🛤', cost: 0, yields: {}, movementBonus: -1, allowedTerrains: ['grassland', 'plains', 'desert', 'tundra', 'hill', 'coast'], requiredTech: null, removesFeature: false },
+  ];
+}
+
+function getDistrictBuildingTypes_() {
+  return [
+    { id: 'library', nameRu: 'Библиотека', cost: 90, yields: { science: 2 }, housing: 0, modifiers: [], districtId: 'campus' },
+    { id: 'university', nameRu: 'Университет', cost: 250, yields: { science: 4 }, housing: 0, modifiers: [], districtId: 'campus' },
+    { id: 'market', nameRu: 'Рынок', cost: 80, yields: { gold: 3 }, housing: 0, modifiers: [], districtId: 'commercial_hub' },
+    { id: 'bank', nameRu: 'Банк', cost: 260, yields: { gold: 5 }, housing: 0, modifiers: [], districtId: 'commercial_hub' },
+    { id: 'lighthouse', nameRu: 'Маяк', cost: 80, yields: { food: 1, gold: 1 }, housing: 1, modifiers: [], districtId: 'harbor' },
+    { id: 'shipyard', nameRu: 'Верфь', cost: 240, yields: { production: 2 }, housing: 0, modifiers: [], districtId: 'harbor' },
+    { id: 'shrine', nameRu: 'Святилище', cost: 70, yields: { faith: 2 }, housing: 0, modifiers: [], districtId: 'holy_site' },
+    { id: 'temple', nameRu: 'Храм', cost: 200, yields: { faith: 4 }, housing: 1, modifiers: [], districtId: 'holy_site' },
+    { id: 'barracks', nameRu: 'Казармы', cost: 90, yields: { production: 1 }, housing: 1, modifiers: [], districtId: 'encampment' },
+    { id: 'stable', nameRu: 'Конюшня', cost: 160, yields: { production: 1, gold: 1 }, housing: 1, modifiers: [], districtId: 'encampment' },
+    { id: 'amphitheater', nameRu: 'Амфитеатр', cost: 90, yields: { culture: 2 }, housing: 0, modifiers: [], districtId: 'theater_square' },
+    { id: 'art_museum', nameRu: 'Художественный музей', cost: 240, yields: { culture: 3 }, housing: 0, modifiers: [], districtId: 'theater_square' },
+    { id: 'workshop', nameRu: 'Мастерская', cost: 100, yields: { production: 2 }, housing: 0, modifiers: [], districtId: 'industrial_zone' },
+    { id: 'factory', nameRu: 'Завод', cost: 300, yields: { production: 4 }, housing: 0, modifiers: [], districtId: 'industrial_zone' },
+  ];
+}
+
 function createInitialState_() {
   const unitTypes = [
     {
@@ -267,6 +338,17 @@ function createInitialState_() {
       movement: { max: 2 },
       tags: ['military'],
     },
+    {
+      id: 'builder',
+      nameRu: 'Строитель',
+      category: 'civilian',
+      domain: 'land',
+      cost: 50,
+      combat: { melee: 0, ranged: 0, range: 0 },
+      movement: { max: 2 },
+      builderCharges: 3,
+      tags: ['civilian', 'builder'],
+    },
   ];
 
   const buildingTypes = [
@@ -294,7 +376,7 @@ function createInitialState_() {
       housing: 2,
       modifiers: [],
     },
-  ];
+  ].concat(getDistrictBuildingTypes_());
 
   const techTypes = [
     {
@@ -372,6 +454,9 @@ function createInitialState_() {
       allowMultipleOrdersPerEntity: false,
     },
   ];
+  const districtTypes = getInitialDistrictTypes_();
+  const wonderTypes = getInitialWonderTypes_();
+  const hexImprovementTypes = getInitialHexImprovementTypes_();
 
   const players = [
     {
@@ -546,6 +631,12 @@ function createInitialState_() {
     buildingTypes,
     techTypes,
     rules,
+    districts: [],
+    wonders: [],
+    hexImprovements: [],
+    districtTypes,
+    wonderTypes,
+    hexImprovementTypes,
   };
 }
 
@@ -654,7 +745,16 @@ function loadState() {
     buildingTypes: readJsonLines_(CONFIG.RANGES.BUILDING_TYPES),
     techTypes: readJsonLines_(CONFIG.RANGES.TECH_TYPES),
     rules: readJsonLines_(CONFIG.RANGES.RULES),
+    districts: readJsonLines_(CONFIG.RANGES.DISTRICTS),
+    wonders: readJsonLines_(CONFIG.RANGES.WONDERS),
+    hexImprovements: readJsonLines_(CONFIG.RANGES.HEX_IMPROVEMENTS),
+    districtTypes: readJsonLines_(CONFIG.RANGES.DISTRICT_TYPES),
+    wonderTypes: readJsonLines_(CONFIG.RANGES.WONDER_TYPES),
+    hexImprovementTypes: readJsonLines_(CONFIG.RANGES.HEX_IMPROVEMENT_TYPES),
   };
+  if (!state.districtTypes.length) state.districtTypes = getInitialDistrictTypes_();
+  if (!state.wonderTypes.length) state.wonderTypes = getInitialWonderTypes_();
+  if (!state.hexImprovementTypes.length) state.hexImprovementTypes = getInitialHexImprovementTypes_();
 
   if (!state.meta) {
     throw new Error('Игра не инициализирована. Запусти "Новая игра".');
@@ -678,6 +778,12 @@ function saveState(state) {
   writeJsonLines_(CONFIG.RANGES.BUILDING_TYPES, state.buildingTypes);
   writeJsonLines_(CONFIG.RANGES.TECH_TYPES, state.techTypes);
   writeJsonLines_(CONFIG.RANGES.RULES, state.rules);
+  writeJsonLines_(CONFIG.RANGES.DISTRICTS, state.districts || []);
+  writeJsonLines_(CONFIG.RANGES.WONDERS, state.wonders || []);
+  writeJsonLines_(CONFIG.RANGES.HEX_IMPROVEMENTS, state.hexImprovements || []);
+  writeJsonLines_(CONFIG.RANGES.DISTRICT_TYPES, state.districtTypes || []);
+  writeJsonLines_(CONFIG.RANGES.WONDER_TYPES, state.wonderTypes || []);
+  writeJsonLines_(CONFIG.RANGES.HEX_IMPROVEMENT_TYPES, state.hexImprovementTypes || []);
 }
 
 function buildIndexes_(state) {
@@ -691,8 +797,20 @@ function buildIndexes_(state) {
     buildingTypeById: indexById_(state.buildingTypes),
     techTypeById: indexById_(state.techTypes),
     ruleById: indexById_(state.rules),
+    districtById: indexById_(state.districts || []),
+    wonderById: indexById_(state.wonders || []),
+    hexImprovementById: indexById_(state.hexImprovements || []),
+    districtTypeById: indexById_(state.districtTypes || []),
+    wonderTypeById: indexById_(state.wonderTypes || []),
+    hexImprovementTypeById: indexById_(state.hexImprovementTypes || []),
     cityByHexId: {},
     unitsByHexId: {},
+    districtsByHexId: {},
+    wonderByHexId: {},
+    improvementByHexId: {},
+    districtsByCityId: {},
+    wondersByCityId: {},
+    wonderByTypeId: {},
   };
 
   state.hexes.forEach((hex) => {
@@ -708,6 +826,23 @@ function buildIndexes_(state) {
       state.index.unitsByHexId[unit.hexId] = [];
     }
     state.index.unitsByHexId[unit.hexId].push(unit);
+  });
+
+  (state.districts || []).forEach((district) => {
+    state.index.districtsByHexId[district.hexId] = district;
+    if (!state.index.districtsByCityId[district.cityId]) state.index.districtsByCityId[district.cityId] = [];
+    state.index.districtsByCityId[district.cityId].push(district);
+  });
+
+  (state.wonders || []).forEach((wonder) => {
+    state.index.wonderByHexId[wonder.hexId] = wonder;
+    state.index.wonderByTypeId[wonder.typeId] = wonder;
+    if (!state.index.wondersByCityId[wonder.cityId]) state.index.wondersByCityId[wonder.cityId] = [];
+    state.index.wondersByCityId[wonder.cityId].push(wonder);
+  });
+
+  (state.hexImprovements || []).forEach((imp) => {
+    state.index.improvementByHexId[imp.hexId] = imp;
   });
 }
 
@@ -946,6 +1081,85 @@ function resolveOrders_(state) {
   rebuildStateDerivedFields_(state);
 }
 
+function calcHexPurchaseCost_(dist, city) {
+  const baseByDist = { 1: 20, 2: 35, 3: 70 };
+  const base = baseByDist[dist] || 70;
+  const owned = (city.ownedHexIds || []).length;
+  return Math.round(base * (1 + owned * 0.15));
+}
+
+function applyCityOrder_buyHex_(state, city, payload) {
+  const hex = payload.hexId ? state.index.hexById[payload.hexId] : getHexByName_(state, payload.hexName);
+  if (!hex) throw new Error(`Гекс не найден: ${payload.hexName || payload.hexId}`);
+  if (hex.ownerPlayerId) throw new Error(`Гекс ${hex.name} уже принадлежит игроку ${hex.ownerPlayerId}`);
+
+  const cityHex = state.index.hexById[city.hexId];
+  const dist = axialDistance_(cityHex.q, cityHex.r, hex.q, hex.r);
+  if (dist > 3) throw new Error(`Гекс ${hex.name} слишком далеко (максимум 3 клетки)`);
+
+  const cost = calcHexPurchaseCost_(dist, city);
+  const player = state.index.playerById[city.playerId];
+  if (Number(player.gold || 0) < cost) {
+    throw new Error(`Недостаточно золота для покупки гекса ${hex.name}: нужно ${cost}, есть ${player.gold}`);
+  }
+
+  player.gold -= cost;
+  hex.ownerPlayerId = city.playerId;
+  hex.ownerCityId = city.id;
+  city.ownedHexIds = city.ownedHexIds || [];
+  if (!city.ownedHexIds.includes(hex.id)) city.ownedHexIds.push(hex.id);
+
+  appendLog_(state, {
+    turn: state.meta.turn,
+    type: 'hex_purchased',
+    playerId: city.playerId,
+    text: `Город ${city.name} купил гекс ${hex.name} за ${cost} золота`,
+    payload: { cityId: city.id, hexId: hex.id, cost },
+  });
+}
+
+function applyCityOrder_buildDistrict_(state, city, payload) {
+  const typeId = payload.districtTypeId;
+  const def = state.index.districtTypeById[typeId];
+  if (!def) throw new Error(`Неизвестный тип района: ${typeId}`);
+  if (Number(city.population || 1) < Number(def.populationRequired || 0)) {
+    throw new Error(`Для района "${def.nameRu}" нужно население ${def.populationRequired}, в городе ${city.population}`);
+  }
+
+  const existing = (state.index.districtsByCityId[city.id] || []).find((d) => d.typeId === typeId);
+  if (existing) throw new Error(`Район "${def.nameRu}" уже построен в городе ${city.name}`);
+
+  const hex = payload.hexId ? state.index.hexById[payload.hexId] : getHexByName_(state, payload.hexName);
+  if (!hex) throw new Error(`Гекс не найден: ${payload.hexName || payload.hexId}`);
+  if (hex.ownerCityId && hex.ownerCityId !== city.id) throw new Error(`Гекс ${hex.name} принадлежит другому городу`);
+  if (state.index.districtsByHexId[hex.id]) throw new Error(`На гексе ${hex.name} уже есть район`);
+  if (state.index.wonderByHexId[hex.id]) throw new Error(`На гексе ${hex.name} стоит чудо света`);
+  if (def.requiresCoast) {
+    const hasCoastNeighbor = getHexNeighbors_(state, hex.id).some((n) => n.terrain === 'coast' || n.terrain === 'water');
+    if (!hasCoastNeighbor) throw new Error(`Район "${def.nameRu}" требует соседства с водой`);
+  }
+
+  state.districts.push({
+    id: nextId_('D', state.districts),
+    typeId,
+    cityId: city.id,
+    playerId: city.playerId,
+    hexId: hex.id,
+    buildings: [],
+    turnsBuilt: state.meta.turn,
+  });
+
+  appendLog_(state, {
+    turn: state.meta.turn,
+    type: 'district_built',
+    playerId: city.playerId,
+    text: `Город ${city.name} построил район "${def.nameRu}" на гексе ${hex.name}`,
+    payload: { cityId: city.id, typeId, hexId: hex.id },
+  });
+
+  rebuildStateDerivedFields_(state);
+}
+
 function applyCityOrder_(state, order) {
   const city = state.index.cityById[order.entityId];
   const payload = order.payload || {};
@@ -990,6 +1204,12 @@ function applyCityOrder_(state, order) {
       });
       return;
     }
+    case 'buyHex':
+      applyCityOrder_buyHex_(state, city, payload);
+      return;
+    case 'buildDistrict':
+      applyCityOrder_buildDistrict_(state, city, payload);
+      return;
 
     default:
       throw new Error(`Неподдерживаемое действие города: ${order.action}`);
@@ -1001,6 +1221,61 @@ function applyUnitOrder_(state, order) {
   const payload = order.payload || {};
 
   switch (order.action) {
+    case 'buildImprovement': {
+      const typeId = payload.improvementTypeId;
+      const def = state.index.hexImprovementTypeById[typeId];
+      if (!def) throw new Error(`Неизвестный тип улучшения: ${typeId}`);
+
+      const unitDef = state.index.unitTypeById[unit.type];
+      if (!(unitDef.tags || []).includes('builder')) {
+        throw new Error(`Юнит ${unit.id} не может строить улучшения (нужен тег 'builder')`);
+      }
+
+      const hex = state.index.hexById[unit.hexId];
+      if (!hex) throw new Error('Гекс не найден');
+      if (def.allowedTerrains && !def.allowedTerrains.includes(hex.terrain)) {
+        throw new Error(`Улучшение "${def.nameRu}" нельзя строить на "${getTerrainNameRu_(hex.terrain)}"`);
+      }
+      if (def.requiredFeature && hex.feature !== def.requiredFeature) {
+        throw new Error(`Улучшение "${def.nameRu}" требует особенности "${def.requiredFeature}"`);
+      }
+      if (def.requiredTech) {
+        const player = state.index.playerById[unit.playerId];
+        if (!(player.knownTechs || []).includes(def.requiredTech)) {
+          throw new Error(`Для "${def.nameRu}" нужна технология "${def.requiredTech}"`);
+        }
+      }
+      if (state.index.improvementByHexId[hex.id]) {
+        throw new Error(`На гексе ${hex.name} уже есть улучшение`);
+      }
+
+      state.hexImprovements.push({
+        id: nextId_('I', state.hexImprovements),
+        typeId,
+        hexId: hex.id,
+        playerId: unit.playerId,
+        turnsBuilt: state.meta.turn,
+      });
+
+      if (typeof unit.builderCharges === 'number') {
+        unit.builderCharges -= 1;
+        if (unit.builderCharges <= 0) {
+          state.units = state.units.filter((u) => u.id !== unit.id);
+        }
+      }
+
+      unit.movesLeft = 0;
+      unit.status = 'building';
+      appendLog_(state, {
+        turn: state.meta.turn,
+        type: 'improvement_built',
+        playerId: unit.playerId,
+        text: `Построено улучшение "${def.nameRu}" на гексе ${hex.name}`,
+        payload: { unitId: unit.id, hexId: hex.id, typeId },
+      });
+      rebuildStateDerivedFields_(state);
+      return;
+    }
     case 'move': {
       const targetHexId = payload.targetHexId;
       if (!targetHexId) throw new Error('Не указан targetHexName или targetHexId');
@@ -1180,6 +1455,10 @@ function applyUnitOrder_(state, order) {
 function resolveCombatPhase_(state) {
   state.units = state.units.filter((u) => Number(u.hp || 0) > 0);
   state.cities = state.cities.filter((c) => Number(c.health || 0) > 0);
+  const aliveCityIds = new Set(state.cities.map((c) => c.id));
+  state.districts = (state.districts || []).filter((d) => aliveCityIds.has(d.cityId));
+  state.hexImprovements = (state.hexImprovements || []).filter((i) => !i.cityId || aliveCityIds.has(i.cityId));
+  // Чудеса не уничтожаются автоматически при падении города.
   rebuildStateDerivedFields_(state);
 }
 
@@ -1342,6 +1621,11 @@ function getCityYield_(state, city) {
     const hex = state.index.hexById[hexId];
     if (!hex) return;
     addYield_(yields, getHexYield_(hex));
+    const imp = state.index.improvementByHexId[hexId];
+    if (imp) {
+      const impType = state.index.hexImprovementTypeById[imp.typeId];
+      if (impType && impType.yields) addYield_(yields, impType.yields);
+    }
   });
 
   (city.buildings || []).forEach((buildingId) => {
@@ -1349,6 +1633,22 @@ function getCityYield_(state, city) {
     if (def && def.yields) {
       addYield_(yields, def.yields);
     }
+  });
+
+  const districts = state.index.districtsByCityId[city.id] || [];
+  districts.forEach((district) => {
+    const distDef = state.index.districtTypeById[district.typeId];
+    if (distDef && distDef.yields) addYield_(yields, distDef.yields);
+    (district.buildings || []).forEach((buildingId) => {
+      const def = state.index.buildingTypeById[buildingId];
+      if (def && def.yields) addYield_(yields, def.yields);
+    });
+  });
+
+  const wonders = state.index.wondersByCityId[city.id] || [];
+  wonders.forEach((wonder) => {
+    const wDef = state.index.wonderTypeById[wonder.typeId];
+    if (wDef && wDef.yields) addYield_(yields, wDef.yields);
   });
 
   return yields;
@@ -1463,10 +1763,59 @@ function getProductionCost_(state, item) {
     if (!def) throw new Error(`Неизвестный тип здания ${item.typeId}`);
     return Number(def.cost || 999999);
   }
+  if (item.kind === 'wonder') {
+    const def = state.index.wonderTypeById[item.typeId];
+    if (!def) throw new Error(`Неизвестное чудо ${item.typeId}`);
+    return Number(def.cost || 999999);
+  }
+  if (item.kind === 'district') {
+    const def = state.index.districtTypeById[item.typeId];
+    if (!def) throw new Error(`Неизвестный тип района ${item.typeId}`);
+    return Number(def.cost || 999999);
+  }
   throw new Error(`Неизвестный вид производства ${item.kind}`);
 }
 
 function finishProductionItem_(state, city, item) {
+  if (item.kind === 'wonder') {
+    const def = state.index.wonderTypeById[item.typeId];
+    if (!def) throw new Error(`Неизвестный тип чуда: ${item.typeId}`);
+    if (state.index.wonderByTypeId[item.typeId]) throw new Error(`Чудо "${def.nameRu}" уже построено в мире`);
+    const hex = item.hexId ? state.index.hexById[item.hexId] : getHexByName_(state, item.hexName);
+    if (!hex) throw new Error(`Для чуда "${def.nameRu}" не указан гекс`);
+    if (state.index.districtsByHexId[hex.id]) throw new Error(`На гексе ${hex.name} уже стоит район`);
+    if (state.index.wonderByHexId[hex.id]) throw new Error(`На гексе ${hex.name} уже стоит другое чудо`);
+    if (def.requiresCoast) {
+      const hasCoast = getHexNeighbors_(state, hex.id).some((n) => n.terrain === 'coast' || n.terrain === 'water');
+      if (!hasCoast) throw new Error(`Чудо "${def.nameRu}" требует гекса рядом с водой`);
+    }
+    state.wonders.push({
+      id: nextId_('W', state.wonders),
+      typeId: item.typeId,
+      cityId: city.id,
+      playerId: city.playerId,
+      hexId: hex.id,
+      turnsBuilt: state.meta.turn,
+    });
+    Object.keys(def.cityBonus || {}).forEach((k) => {
+      city[k] = Number(city[k] || 0) + Number(def.cityBonus[k] || 0);
+    });
+    appendLog_(state, {
+      turn: state.meta.turn,
+      type: 'wonder_built',
+      playerId: city.playerId,
+      text: `${city.name} завершил строительство чуда "${def.nameRu}"! ${def.description || ''}`,
+      payload: { cityId: city.id, typeId: item.typeId, hexId: hex.id },
+    });
+    rebuildStateDerivedFields_(state);
+    return;
+  }
+
+  if (item.kind === 'district') {
+    applyCityOrder_buildDistrict_(state, city, { districtTypeId: item.typeId, hexId: item.hexId, hexName: item.hexName });
+    return;
+  }
+
   if (item.kind === 'building') {
     city.buildings = city.buildings || [];
     if (!city.buildings.includes(item.typeId)) {
@@ -1496,6 +1845,7 @@ function finishProductionItem_(state, city, item) {
       xp: 0,
       promotions: [],
       task: null,
+      builderCharges: typeof def.builderCharges === 'number' ? def.builderCharges : undefined,
     };
 
     state.units.push(newUnit);
@@ -1676,7 +2026,7 @@ function assignHexOwnershipFromCities_(hexes, cities) {
     }
 
     const radius1 = getNearbyHexIds_(city.hexId, hexes, 1);
-    radius1.forEach((hexId) => {
+    radius1.concat(city.ownedHexIds || []).forEach((hexId) => {
       const hex = hexById[hexId];
       if (!hex) return;
       if (!hex.ownerCityId) {
@@ -1814,6 +2164,13 @@ function getUnitMoveCostToHex_(state, unit, hexId) {
   if (hex.feature) {
     cost += Number(featureCostTable[hex.feature] || 0);
   }
+  const impOnHex = state.index.improvementByHexId ? state.index.improvementByHexId[hexId] : null;
+  if (impOnHex) {
+    const impType = state.index.hexImprovementTypeById[impOnHex.typeId];
+    if (impType && impType.movementBonus) {
+      cost = Math.max(1, cost + Number(impType.movementBonus));
+    }
+  }
 
   return Math.max(1, cost);
 }
@@ -1892,11 +2249,26 @@ function renderMap() {
 function getHexRenderText_(state, hex) {
   const city = state.index.cityByHexId[hex.id];
   const units = state.index.unitsByHexId[hex.id] || [];
+  const district = state.index.districtsByHexId ? state.index.districtsByHexId[hex.id] : null;
+  const wonder = state.index.wonderByHexId ? state.index.wonderByHexId[hex.id] : null;
+  const improvement = state.index.improvementByHexId ? state.index.improvementByHexId[hex.id] : null;
 
   if (city) return `🏛 ${city.name}`;
+  if (wonder) {
+    const wDef = state.index.wonderTypeById ? state.index.wonderTypeById[wonder.typeId] : null;
+    return `${(wDef && wDef.icon) || '✨'} ${wDef ? wDef.nameRu : wonder.typeId}`;
+  }
+  if (district) {
+    const dDef = state.index.districtTypeById ? state.index.districtTypeById[district.typeId] : null;
+    return `${(dDef && dDef.icon) || '🏗'} ${dDef ? dDef.nameRu : district.typeId}`;
+  }
   if (units.length > 0) {
     if (units.length === 1) return `⚔ ${getUnitNameRu_(state, units[0].type)}`;
     return `⚔ x${units.length}`;
+  }
+  if (improvement) {
+    const iDef = state.index.hexImprovementTypeById ? state.index.hexImprovementTypeById[improvement.typeId] : null;
+    return [terrainShortRu_(hex.terrain), (iDef && iDef.icon) || '🔧'].join(' ');
   }
 
   const t = terrainShortRu_(hex.terrain);
@@ -1931,6 +2303,9 @@ function getHexBackgroundColor_(hex) {
 function getHexNote_(state, hex) {
   const city = state.index.cityByHexId[hex.id];
   const units = state.index.unitsByHexId[hex.id] || [];
+  const district = state.index.districtsByHexId ? state.index.districtsByHexId[hex.id] : null;
+  const wonder = state.index.wonderByHexId ? state.index.wonderByHexId[hex.id] : null;
+  const improvement = state.index.improvementByHexId ? state.index.improvementByHexId[hex.id] : null;
   const parts = [
     `Гекс: ${hex.name}`,
     `ID: ${hex.id}`,
@@ -1943,6 +2318,21 @@ function getHexNote_(state, hex) {
   ];
 
   if (city) parts.push(`Город: ${city.name} (${city.id})`);
+  if (district) {
+    const dDef = state.index.districtTypeById ? state.index.districtTypeById[district.typeId] : null;
+    parts.push(`Район: ${dDef ? dDef.nameRu : district.typeId} (${district.id})`);
+    if (district.buildings && district.buildings.length) {
+      parts.push(`  Здания: ${district.buildings.map((b) => getBuildingNameRu_(state, b)).join(', ')}`);
+    }
+  }
+  if (wonder) {
+    const wDef = state.index.wonderTypeById ? state.index.wonderTypeById[wonder.typeId] : null;
+    parts.push(`Чудо: ${wDef ? wDef.nameRu : wonder.typeId} (${wonder.id})`);
+  }
+  if (improvement) {
+    const iDef = state.index.hexImprovementTypeById ? state.index.hexImprovementTypeById[improvement.typeId] : null;
+    parts.push(`Улучшение: ${iDef ? iDef.nameRu : improvement.typeId}`);
+  }
   if (units.length) {
     parts.push(`Юниты: ${units.map((u) => `${u.id}:${getUnitNameRu_(state, u.type)}:${u.playerId}`).join(', ')}`);
   }
@@ -2215,6 +2605,8 @@ function renderReports() {
     row += unitValues.length + 2;
   }
 
+  row = renderReportsExtraTables_(state, sheet, row);
+
   sheet.getRange(row, 1).setValue('Последние события');
   sheet.getRange(row, 1).setFontWeight('bold');
   row++;
@@ -2233,7 +2625,57 @@ function renderReports() {
     sheet.getRange(row, 1, recentLog.length, logHeaders.length).setValues(recentLog);
   }
 
-  sheet.autoResizeColumns(1, 14);
+  sheet.autoResizeColumns(1, 17);
+}
+
+function renderReportsExtraTables_(state, sheet, startRow) {
+  let row = startRow;
+
+  sheet.getRange(row, 1).setValue('Районы').setFontWeight('bold');
+  row++;
+  const districtHeaders = ['id', 'город', 'тип', 'гекс', 'здания', 'ход постройки'];
+  sheet.getRange(row, 1, 1, districtHeaders.length).setValues([districtHeaders]).setFontWeight('bold');
+  row++;
+  const districtValues = (state.districts || []).map((d) => {
+    const dDef = state.index.districtTypeById[d.typeId];
+    return [d.id, d.cityId, dDef ? dDef.nameRu : d.typeId, getHexNameById_(state, d.hexId), (d.buildings || []).map((b) => getBuildingNameRu_(state, b)).join(', '), d.turnsBuilt || ''];
+  });
+  if (districtValues.length) {
+    sheet.getRange(row, 1, districtValues.length, districtHeaders.length).setValues(districtValues);
+    row += districtValues.length;
+  }
+  row += 2;
+
+  sheet.getRange(row, 1).setValue('Чудеса света').setFontWeight('bold');
+  row++;
+  const wonderHeaders = ['id', 'тип', 'город', 'гекс', 'игрок', 'ход постройки'];
+  sheet.getRange(row, 1, 1, wonderHeaders.length).setValues([wonderHeaders]).setFontWeight('bold');
+  row++;
+  const wonderValues = (state.wonders || []).map((w) => {
+    const wDef = state.index.wonderTypeById[w.typeId];
+    return [w.id, wDef ? `${wDef.icon || ''} ${wDef.nameRu}` : w.typeId, w.cityId, getHexNameById_(state, w.hexId), w.playerId, w.turnsBuilt || ''];
+  });
+  if (wonderValues.length) {
+    sheet.getRange(row, 1, wonderValues.length, wonderHeaders.length).setValues(wonderValues);
+    row += wonderValues.length;
+  }
+  row += 2;
+
+  sheet.getRange(row, 1).setValue('Улучшения гексов').setFontWeight('bold');
+  row++;
+  const impHeaders = ['id', 'тип', 'гекс', 'игрок', 'ход постройки'];
+  sheet.getRange(row, 1, 1, impHeaders.length).setValues([impHeaders]).setFontWeight('bold');
+  row++;
+  const impValues = (state.hexImprovements || []).map((imp) => {
+    const iDef = state.index.hexImprovementTypeById[imp.typeId];
+    return [imp.id, iDef ? `${iDef.icon || ''} ${iDef.nameRu}` : imp.typeId, getHexNameById_(state, imp.hexId), imp.playerId, imp.turnsBuilt || ''];
+  });
+  if (impValues.length) {
+    sheet.getRange(row, 1, impValues.length, impHeaders.length).setValues(impValues);
+    row += impValues.length;
+  }
+
+  return row + 2;
 }
 
 /*******************************************
@@ -2263,6 +2705,21 @@ function getBuildingNameRu_(state, typeId) {
 function getTechNameRu_(state, techId) {
   const def = state.index.techTypeById[techId];
   return def ? (def.nameRu || techId) : techId;
+}
+
+function getDistrictNameRu_(state, typeId) {
+  const def = state.index.districtTypeById[typeId];
+  return def ? (def.nameRu || typeId) : typeId;
+}
+
+function getWonderNameRu_(state, typeId) {
+  const def = state.index.wonderTypeById[typeId];
+  return def ? (def.nameRu || typeId) : typeId;
+}
+
+function getImprovementNameRu_(state, typeId) {
+  const def = state.index.hexImprovementTypeById[typeId];
+  return def ? (def.nameRu || typeId) : typeId;
 }
 
 function getTerrainNameRu_(terrain) {
@@ -2312,6 +2769,7 @@ function getUnitStatusRu_(status) {
     case 'idle': return 'ожидает';
     case 'moved': return 'переместился';
     case 'attacked': return 'атаковал';
+    case 'building': return 'строит улучшение';
     default: return status || '-';
   }
 }
@@ -2321,6 +2779,8 @@ function formatQueueRu_(state, queue) {
   return queue.map((item) => {
     if (item.kind === 'unit') return `Юнит: ${getUnitNameRu_(state, item.typeId)}`;
     if (item.kind === 'building') return `Здание: ${getBuildingNameRu_(state, item.typeId)}`;
+    if (item.kind === 'district') return `Район: ${getDistrictNameRu_(state, item.typeId)}`;
+    if (item.kind === 'wonder') return `Чудо: ${getWonderNameRu_(state, item.typeId)}`;
     return JSON.stringify(item);
   }).join(' → ');
 }
