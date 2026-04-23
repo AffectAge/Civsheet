@@ -206,7 +206,7 @@ function runActionsFromSwitchboard() {
       messages.push(`⚠ Неизвестное действие: ${actionId}`);
       return;
     }
-    const fn = this[actionDef.id];
+    const fn = globalThis[actionDef.id];
     if (typeof fn !== 'function') {
       messages.push(`⚠ Функция не найдена: ${actionDef.id}`);
       return;
