@@ -218,8 +218,13 @@ function executeSwitchboardAction_(actionId) {
     return `⚠ Функция не найдена: ${actionDef.id}`;
   }
 
-  fn();
-  return `✅ Выполнено: ${actionDef.id}`;
+  try {
+    fn();
+    return `✅ Выполнено: ${actionDef.id}`;
+  } catch (error) {
+    const errorText = error && error.message ? error.message : String(error);
+    return `❌ Ошибка при выполнении ${actionDef.id}: ${errorText}`;
+  }
 }
 
 function runActionsFromSwitchboard() {
