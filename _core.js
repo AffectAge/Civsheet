@@ -189,6 +189,39 @@ function getSwitchboardActions_() {
   ];
 }
 
+function onEdit(e) {
+  if (!e || !e.range) return;
+
+  const range = e.range;
+  const sheet = range.getSheet();
+  if (!sheet || sheet.getName() !== CONFIG.SHEETS.SWITCHBOARD) return;
+  if (range.getColumn() !== 2 || range.getRow() < 2) return;
+
+  const isTrueToggle = e.value === 'TRUE' || range.getValue() === true;
+  if (!isTrueToggle) return;
+
+  const actionId = String(sheet.getRange(range.getRow(), 1).getValue() || '').trim();
+  const message = executeSwitchboardAction_(actionId);
+  sheet.getRange(range.getRow(), 2).setValue(false);
+  SpreadsheetApp.getActive().toast(message);
+}
+
+function executeSwitchboardAction_(actionId) {
+  const actions = getSwitchboardActions_();
+  const actionDef = actions.find((a) => a.id === actionId);
+  if (!actionDef) {
+    return `⚠ Неизвестное действие: ${actionId}`;
+  }
+
+  const fn = globalThis[actionDef.id];
+  if (typeof fn !== 'function') {
+    return `⚠ Функция не найдена: ${actionDef.id}`;
+  }
+
+  fn();
+  return `✅ Выполнено: ${actionDef.id}`;
+}
+
 function runActionsFromSwitchboard() {
   bootstrapGameStorage();
   const sheet = getOrCreateSheet_(CONFIG.SHEETS.SWITCHBOARD);
@@ -200,19 +233,7 @@ function runActionsFromSwitchboard() {
     const actionId = String(row[0] || '').trim();
     const shouldRun = row[1] === true;
     if (!shouldRun) return;
-
-    const actionDef = actions.find((a) => a.id === actionId);
-    if (!actionDef) {
-      messages.push(`⚠ Неизвестное действие: ${actionId}`);
-      return;
-    }
-    const fn = this[actionDef.id];
-    if (typeof fn !== 'function') {
-      messages.push(`⚠ Функция не найдена: ${actionDef.id}`);
-      return;
-    }
-    fn();
-    messages.push(`✅ Выполнено: ${actionDef.id}`);
+    messages.push(executeSwitchboardAction_(actionId));
     sheet.getRange(2 + i, 2).setValue(false);
   });
 
